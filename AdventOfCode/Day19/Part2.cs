@@ -6,106 +6,74 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Drawing;
 
-namespace AdventOfCode.Day18
+namespace AdventOfCode.Day19
 {
     public class Part2
     {
+        private static Regex numbersRegex = new Regex(@"\d+");
+        private static int[] registers = new[] { 1, 0, 0, 0, 0, 0 };
         public static void Run()
         {
-            var input = File.ReadAllLines("Day18/Input.txt");
-            var blue = input.Select(line => line.ToArray()).ToArray();
-            var green = input.Select(line => line.ToArray()).ToArray();
-
-            var history = new Dictionary<int, Tuple<int, int>>();
-
-            for (int i = 0; i < 1000000000; i++)
+            var input = File.ReadAllLines("Day19/Input.txt");
+            var ipp = -1;
+            var instructions = new Dictionary<int, Instruction>();
+            for (int i = 0; i < input.Length; i++)
             {
-                var current = i % 2 == 1 ? blue : green;
-                var other = i % 2 == 1 ? green : blue;
-
-                for (int y = 0; y < current.Length; y++)
-                {
-                    for (int x = 0; x < current[0].Length; x++)
-                    {
-                        var adjacent = GetAdjacentChars(other, y, x);
-                        if (other[y][x] == '.')
-                        {
-                            current[y][x] = adjacent.Count(c => c == '|') >= 3 ? '|' : '.';
-                        }
-                        else if (other[y][x] == '|')
-                        {
-                            current[y][x] = adjacent.Count(c => c == '#') >= 3 ? '#' : '|';
-                        }
-                        else if (other[y][x] == '#')
-                        {
-                            current[y][x] = adjacent.Count(c => c == '#') >= 1 && adjacent.Count(c => c == '|') >= 1 ? '#' : '.';
-                        }
-                    }
-                }
-
-                var hash = GetHashCode(current);
-                if (history.ContainsKey(hash))
-                {
-                    var index = history[hash].Item1;
-                    var count = history.Count() - index;
-
-                    var offsetFromIndex = (1000000000 - index) % count;
-
-                    var value = history.Values.Single(tuple => tuple.Item1 == index + offsetFromIndex - 1).Item2;
-                    Console.WriteLine(value);
-                    break;
-                }
+                if (input[i].StartsWith("#ip"))
+                    ipp = int.Parse(input[i].Substring(input[i].Length - 1, 1));
                 else
-                {
-                    var wood = current.Sum(row => row.Count(c => c == '|'));
-                    var lumber = current.Sum(row => row.Count(c => c == '#'));
-                    history.Add(hash, new Tuple<int, int>(i, wood * lumber));
-                }
+                    instructions.Add(i - 1, new Instruction(input[i]));
             }
+
+            var ip = 0;
+            while (ip < instructions.Count)
+            {
+                registers[ipp] = ip;
+                var instruction = instructions[ip];
+
+                switch (instruction.Operation)
+                {
+                    case "addr": registers[instruction.C] = registers[instruction.A] + registers[instruction.B]; break;
+                    case "addi": registers[instruction.C] = registers[instruction.A] + instruction.B; break;
+                    case "mulr": registers[instruction.C] = registers[instruction.A] * registers[instruction.B]; break;
+                    case "muli": registers[instruction.C] = registers[instruction.A] * instruction.B; break;
+                    case "banr": registers[instruction.C] = registers[instruction.A] & registers[instruction.B]; break;
+                    case "bani": registers[instruction.C] = registers[instruction.A] & instruction.B; break;
+                    case "borr": registers[instruction.C] = registers[instruction.A] | registers[instruction.B]; break;
+                    case "bori": registers[instruction.C] = registers[instruction.A] | instruction.B; break;
+                    case "setr": registers[instruction.C] = registers[instruction.A]; break;
+                    case "seti": registers[instruction.C] = instruction.A; break;
+                    case "gtir": registers[instruction.C] = instruction.A > registers[instruction.B] ? 1 : 0; break;
+                    case "gtri": registers[instruction.C] = registers[instruction.A] > instruction.B ? 1 : 0; break;
+                    case "gtrr": registers[instruction.C] = registers[instruction.A] > registers[instruction.B] ? 1 : 0; break;
+                    case "eqir": registers[instruction.C] = instruction.A == registers[instruction.B] ? 1 : 0; break;
+                    case "eqri": registers[instruction.C] = registers[instruction.A] == instruction.B ? 1 : 0; break;
+                    case "eqrr": registers[instruction.C] = registers[instruction.A] == registers[instruction.B] ? 1 : 0; break;
+
+                    default: throw new NotImplementedException();
+                }
+                ip = registers[ipp];
+                ip++;
+
+            }
+            Console.WriteLine(string.Join(", ", registers));
         }
 
-        private static int GetHashCode(char[][] map)
+        private class Instruction
         {
-            int hash = 17;
-            for (int i = 0; i < map.Length; i++)
+            public string Operation { get; }
+            public int A { get; }
+            public int B { get; }
+            public int C { get; }
+
+            public Instruction(string input)
             {
-                for (int j = 0; j < map[0].Length; j++)
-                {
-                    hash = hash * 31 + map[i][j];
-                }
+                Operation = input.Substring(0, 4);
+                var numbers = numbersRegex.Matches(input);
+                A = int.Parse(numbers[0].Value);
+                B = int.Parse(numbers[1].Value);
+                C = int.Parse(numbers[2].Value);
             }
-            return hash;
-        }
-
-        private static List<char> GetAdjacentChars(char[][] area, int y, int x)
-        {
-            var arr = new List<char>();
-
-            if (y > 0)
-            {
-                if (x > 0)
-                    arr.Add(area[y - 1][x - 1]);
-                arr.Add(area[y - 1][x]);
-                if (x < area[0].Length - 1)
-                    arr.Add(area[y - 1][x + 1]);
-            }
-
-            if (x > 0)
-                arr.Add(area[y][x - 1]);
-
-            if (x < area[0].Length - 1)
-                arr.Add(area[y][x + 1]);
-
-            if (y < area.Length - 1)
-            {
-                if (x > 0)
-                    arr.Add(area[y + 1][x - 1]);
-                arr.Add(area[y + 1][x]);
-                if (x < area[0].Length - 1)
-                    arr.Add(area[y + 1][x + 1]);
-            }
-
-            return arr;
         }
     }
 }
