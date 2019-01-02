@@ -54,6 +54,18 @@ namespace AdventOfCode
             //Console.WriteLine();
             //stopwatch.Restart();
 
+            //Day8.Part1.Run();
+            //Day8.Part2.Run();
+            //Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
+            //Console.WriteLine();
+            //stopwatch.Restart();
+
+            //Day9.Part1.Run();
+            //Day9.Part2.Run();
+            //Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
+            //Console.WriteLine();
+            //stopwatch.Restart();
+
             //Day10.Part1.Run();
             //Day10.Part2.Run();
             //Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
@@ -84,8 +96,32 @@ namespace AdventOfCode
             //Console.WriteLine();
             //stopwatch.Restart();
 
+            //Day15.Part1.Run();
+            //Day15.Part2.Run();
+            //Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
+            //Console.WriteLine();
+            //stopwatch.Restart();
+
             //Day16.Part1.Run();
-            Day16.Part2.Run();
+            //Day16.Part2.Run();
+            //Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
+            //Console.WriteLine();
+            //stopwatch.Restart();
+
+            //Day17.Part1.Run();
+            //Day17.Part2.Run();
+            //Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
+            //Console.WriteLine();
+            //stopwatch.Restart();
+
+            //Day18.Part1.Run();
+            //Day18.Part2.Run();
+            //Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
+            //Console.WriteLine();
+            //stopwatch.Restart();
+
+            //Day19.Part1.Run();
+            Day19.Part2.Run();
             Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
             Console.WriteLine();
             stopwatch.Restart();
