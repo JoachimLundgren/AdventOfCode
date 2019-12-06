@@ -27,8 +27,11 @@ namespace AdventOfCode2019
             //Day5.Part1.Run();
             //Day5.Part2.Run();
 
-            Day6.Part1.Run();
+            //Day6.Part1.Run();
             //Day6.Part2.Run();
+
+            Day7.Part1.Run();
+            //Day7.Part2.Run();
 
             Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
             Console.WriteLine();
