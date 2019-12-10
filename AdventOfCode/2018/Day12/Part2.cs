@@ -15,7 +15,7 @@ namespace AdventOfCode2018.Day12
             var spread = input.Skip(2).Select(line => new SpreadDefinition(line)).ToList();
             var prepends = 0;
             var oldPoints = 0;
-            var oldEstimatedPoints = 0l;
+            var oldEstimatedPoints = 0L;
             var iterations = 50000000000;
             var sameEstimates = 0;
 

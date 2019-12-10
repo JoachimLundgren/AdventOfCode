@@ -11,20 +11,7 @@ namespace AdventOfCode2019.Day10
         public static void Run()
         {
             var input = File.ReadAllLines("2019/Day10/Input.txt");
-
-            var g = GetDegree(new Coordinate(11, 13), new Coordinate(11, 12));
-            var h = GetDegree(new Coordinate(11, 13), new Coordinate(11, 14));
-
-            var noll = GetDegree(new Coordinate(0, 0), new Coordinate(0, 1));
-            var hundraattie = GetDegree(new Coordinate(0, 0), new Coordinate(0, -1));
-            var nittio = GetDegree(new Coordinate(0, 0), new Coordinate(1, 0));
-            var fortyfem = GetDegree(new Coordinate(0, 0), new Coordinate(1, 1));
-            var tvasjuttio = GetDegree(new Coordinate(0, 0), new Coordinate(-1, 0));
-            var treettfem = GetDegree(new Coordinate(0, 0), new Coordinate(-1, 1));
-            var tvatvafem = GetDegree(new Coordinate(0, 0), new Coordinate(-1, -1));
-
-
-            var map = new List<Coordinate>(); // input.Select(str => str.ToList().Select(c => c == '#').ToList()).ToList();
+            var map = new List<Coordinate>();
             for (int i = 0; i < input.Length; i++)
             {
                 for (int j = 0; j < input[i].Length; j++)
@@ -33,7 +20,6 @@ namespace AdventOfCode2019.Day10
                         map.Add(new Coordinate(j, i));
                 }
             }
-
 
             var best = 0;
             Coordinate bestCoordinate = null;
@@ -51,25 +37,25 @@ namespace AdventOfCode2019.Day10
             Console.WriteLine(best);
 
             var coordinates = GetVisibleAsteroids(bestCoordinate, map);
-            int a = 0;
-            while (a < 199)
+            int a = 1;
+            while (a < 200)
             {
                 coordinates = SortCoordinates(bestCoordinate, coordinates);
-                while (a < 199 && coordinates.Any())
+                while (a < 200 && coordinates.Any())
                 {
                     var c = coordinates[0];
                     map.Remove(c);
                     coordinates.RemoveAt(0);
-                    Console.WriteLine($"{a} remove: {c.X},{c.Y}");
+                    //Console.WriteLine($"{a} remove: {c.X},{c.Y}");
                     a++;
                 }
 
-                if (a < 199)
+                if (a < 200)
                     coordinates = GetVisibleAsteroids(bestCoordinate, map);
             }
 
             var answer = coordinates[0];
-            Console.WriteLine(answer.X * 100 + answer.Y);   //1500 to high
+            Console.WriteLine(answer.X * 100 + answer.Y);
         }
 
         private static List<Coordinate> SortCoordinates(Coordinate origin, List<Coordinate> coordinates)
@@ -80,9 +66,9 @@ namespace AdventOfCode2019.Day10
         private static double GetDegree(Coordinate origin, Coordinate target)
         {
             if (target.X >= origin.X)
-                return 90 - ((180 / Math.PI) * Math.Atan((double)(origin.Y - target.Y) / (origin.X - target.X)));
+                return 90 - ((180 / Math.PI) * Math.Atan((double)(-target.Y - -origin.Y) / (target.X - origin.X)));
             else
-                return 270 - ((180 / Math.PI) * Math.Atan((double)(origin.Y - target.Y) / (origin.X - target.X)));
+                return 270 - ((180 / Math.PI) * Math.Atan((double)(-target.Y - -origin.Y) / (target.X - origin.X)));
         }
 
         private static List<Coordinate> GetVisibleAsteroids(Coordinate origin, List<Coordinate> map)
