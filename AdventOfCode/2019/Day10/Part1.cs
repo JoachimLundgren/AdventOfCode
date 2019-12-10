@@ -9,7 +9,6 @@ namespace AdventOfCode2019.Day10
 {
     public class Part1
     {
-        private static int totalNumberOfAstroids;
         public static void Run()
         {
             var temp = GetCoordinatesBetweenCoordinates(new Coordinate(1, 1), new Coordinate(4, 4));
@@ -17,7 +16,6 @@ namespace AdventOfCode2019.Day10
 
             var input = File.ReadAllLines("2019/Day10/Input.txt");
             var map = input.Select(str => str.ToList().Select(c => c == '#').ToList()).ToList();
-            totalNumberOfAstroids = map.Sum(m => m.Count(c => c));
 
             var best = 0;
             for (int y = 0; y < map.Count; y++)
@@ -27,7 +25,7 @@ namespace AdventOfCode2019.Day10
                     if (map[y][x])
                     {
                         var current = GetNumberOfVisibleAstroids(new Coordinate(x, y), map);
-                        Console.WriteLine(current);
+
                         if (current > best)
                             best = current;
                     }
@@ -69,42 +67,19 @@ namespace AdventOfCode2019.Day10
         private static List<Coordinate> GetCoordinatesBetweenCoordinates(Coordinate origin, Coordinate target)
         {
             var coordinates = new List<Coordinate>();
-            var delta = 1;
 
-            for (int i = origin.X + 1; i < target.X; i++)
+            var xSteps = target.X - origin.X;
+            var ySteps = target.Y - origin.Y;
+
+            var dist = Math.Abs(xSteps) + Math.Abs(ySteps);
+
+            for (int i = 1; i < dist; i++)
             {
-                var newY = origin.Y + i * (Math.Abs(target.Y - origin.Y)) / (target.X - origin.X);
-
-                if (newY < target.Y && newY > origin.Y || newY > target.Y && newY < origin.Y)
-                    coordinates.Add(new Coordinate(i, newY));
-
-                newY = origin.Y - i * (Math.Abs(target.Y - origin.Y)) / (target.X - origin.X);
-
-                if (newY < target.Y && newY > origin.Y || newY > target.Y && newY < origin.Y)
-                    coordinates.Add(new Coordinate(i, newY));
+                var x = origin.X + i * xSteps / (double)dist;
+                var y = origin.Y + i * ySteps / (double)dist;
+                if (x % 1 == 0 && y % 1 == 0)
+                    coordinates.Add(new Coordinate((int)x, (int)y));
             }
-
-            for (int i = target.X + 1; i < origin.X; i++)
-            {
-                if (origin.Y + i * delta < target.Y)
-                    coordinates.Add(new Coordinate(i, i * delta));
-
-                if (target.Y + i * delta < origin.Y)
-                    coordinates.Add(new Coordinate(i, i * delta));
-            }
-
-            /*
-            for (int i = origin.Y + 1; i < target.Y; i++)
-            {
-                if (i * deltaX < target.Y)
-                    coordinates.Add(new Coordinate(i * deltaX, i));
-            }
-
-            for (int i = target.Y + 1; i < origin.Y; i++)
-            {
-                if (i * deltaX < target.Y)
-                    coordinates.Add(new Coordinate(i * deltaX, i));
-            }*/
 
             return coordinates;
         }
