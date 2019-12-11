@@ -43,7 +43,10 @@ namespace AdventOfCode2019
             //Day10.Part2.Run();
 
             //Day11.Part1.Run();
-            Day11.Part2.Run();
+            //Day11.Part2.Run();
+
+            Day12.Part1.Run();
+            Day12.Part2.Run();
 
             Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
             Console.WriteLine();

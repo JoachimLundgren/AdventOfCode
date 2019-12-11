@@ -51,20 +51,11 @@ namespace AdventOfCode2019.Day11
 
         private static int Turn(int orientation, int direction)
         {
-            if (direction == 0)
-                orientation++;
-            else if (direction == 1)
-                orientation--;
-            else
-                throw new ApplicationException("hmmm");
+            var res = (orientation + (direction == 0 ? 1 : -1)) % 4;
+            if (res < 0)
+                res += 4;
 
-            //TODO %?
-            if (orientation == -1)
-                orientation = 3;
-            else if (orientation == 4)
-                orientation = 0;
-
-            return orientation;
+            return res;
         }
 
         private class Computer
