@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Linq;
+using AdventOfCode.Utils;
 
 namespace AdventOfCode2019.Day10
 {
@@ -114,18 +115,6 @@ namespace AdventOfCode2019.Day10
             }
 
             return coordinates;
-        }
-
-
-        private class Coordinate
-        {
-            public int X { get; }
-            public int Y { get; }
-            public Coordinate(int x, int y)
-            {
-                X = x;
-                Y = y;
-            }
         }
     }
 

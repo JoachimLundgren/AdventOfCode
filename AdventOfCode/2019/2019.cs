@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AdventOfCode.Utils;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -49,8 +50,10 @@ namespace AdventOfCode2019
             //Day12.Part2.Run();
 
             //Day13.Part1.Run();
-            Day13.Part2.Run();
+            //Day13.Part2.Run();
             //Day13.Game.Run();
+
+            Run<Day14.Part1>();
 
             Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
             Console.WriteLine();
@@ -59,6 +62,13 @@ namespace AdventOfCode2019
 
             Console.WriteLine($"2019 complete!");
             Console.ReadLine();
+        }
+
+        private static void Run<T>() where T : new()
+        {
+            var method = typeof(T).GetMethod("Run");
+            var obj = new T();
+            method.Invoke(obj, new object[] { });
         }
     }
 }

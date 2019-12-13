@@ -5,6 +5,7 @@ using System.Text;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AdventOfCode.Utils;
 
 namespace AdventOfCode2019.Day13
 {
@@ -22,15 +23,15 @@ namespace AdventOfCode2019.Day13
             var grid = new Dictionary<Coordinate, int>();
 
             var score = 0;
-            var scoreCoordinate = new Coordinate { X = -1, Y = 0 };
-            var paddleCoordinate = new Coordinate { X = -1, Y = -1 };
+            var scoreCoordinate = new Coordinate(-1, 0);
+            var paddleCoordinate = new Coordinate(-1, -1);
 
             while (!computer.Finished)
             {
                 var x = (int)computer.RunCode();
                 var y = (int)computer.RunCode();
                 var id = (int)computer.RunCode();
-                var coordinate = new Coordinate { X = x, Y = y };
+                var coordinate = new Coordinate(x, y);
                 if (coordinate.Equals(scoreCoordinate))
                 {
                     score = id;
@@ -43,7 +44,7 @@ namespace AdventOfCode2019.Day13
                     else
                         grid[coordinate] = id;
 
-                    Console.SetCursorPosition(x + 50, y + 5);
+                    Console.SetCursorPosition(x + 17, y + 3);
                     Console.Write(GetTile(id));
 
                     if (id == 3) //Paddle moved
@@ -82,26 +83,13 @@ namespace AdventOfCode2019.Day13
 
         private static void PrintScore(int score)
         {
-            Console.SetCursorPosition(65, 3);
+            Console.SetCursorPosition(32, 1);
             Console.WriteLine(score);
-        }
-
-
-        private class Coordinate
-        {
-            public int X { get; set; }
-            public int Y { get; set; }
-
-            public override bool Equals(object obj)
-            {
-                var other = obj as Coordinate;
-                return X == other.X && Y == other.Y;
-            }
         }
 
         private class Computer
         {
-            private int inputPointer;
+            //private int inputPointer;
 
             public int Pointer { get; set; }
             public List<long> Program { get; set; }

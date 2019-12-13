@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.IO;
 using System.Text;
+using AdventOfCode.Utils;
 
 namespace AdventOfCode2019.Day13
 {
@@ -21,7 +22,7 @@ namespace AdventOfCode2019.Day13
                 var x = (int)computer.RunCode();
                 var y = (int)computer.RunCode();
                 var id = (int)computer.RunCode();
-                var coordinate = new Coordinate { X = x, Y = y };
+                var coordinate = new Coordinate(x, y);
 
                 if (!grid.ContainsKey(coordinate))
                     grid.Add(coordinate, id);
@@ -30,19 +31,6 @@ namespace AdventOfCode2019.Day13
             }
 
             Console.WriteLine(grid.Values.Count(id => id == 2));
-        }
-
-
-        private class Coordinate
-        {
-            public int X { get; set; }
-            public int Y { get; set; }
-
-            public override bool Equals(object obj)
-            {
-                var other = obj as Coordinate;
-                return X == other.X && Y == other.Y;
-            }
         }
 
         private class Computer
