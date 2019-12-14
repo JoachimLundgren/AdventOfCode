@@ -21,106 +21,70 @@ namespace AdventOfCode2019.Day14
                 var reaction = new Reaction(row);
                 reactions.Add(reaction.Target.Name, reaction);
             }
-
-            var chemicalsNeeded = new Dictionary<string, long>();
             var extraChemicals = new Dictionary<string, long>();
-            extraChemicals.Add("ORE", 1000000000000);
-            var fuelProduced = 0;
-            var orePerFuelRatio = new Part1().Run();
-            var oldPercentage = -1L;
-            var canProduceMore = true;
-            while (canProduceMore)  //Slow...takes around 10min for real input
+            var chemCopy = new Dictionary<string, long>();
+            var oreLeftCopy = 0L;
+
+            var oreLeft = 1000000000000;
+            var productionRate = 10000;
+            var fuels = 0;
+            while (productionRate >= 1)
             {
-                var percentage = 100 - (extraChemicals["ORE"] / 10000000000);
-                if (percentage != oldPercentage)
+                while (oreLeft > 0)
                 {
-                    oldPercentage = percentage;
-                    Console.SetCursorPosition(0, 4);
-                    Console.WriteLine($"{percentage:d2}%");
+                    chemCopy = extraChemicals.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                    oreLeftCopy = oreLeft;
+                    oreLeft -= Create("FUEL", productionRate, extraChemicals);
+                    fuels += productionRate;
                 }
-                chemicalsNeeded.Add("FUEL", 1);
-                while (chemicalsNeeded.Any() && canProduceMore)
-                {
-                    var nextChecmicalsNeeded = new Dictionary<string, long>();
-                    foreach (var need in chemicalsNeeded)   //Determine next reactions
-                    {
-                        if (!need.Key.Equals("ORE"))
-                        {
-                            var reaction = reactions[need.Key];
-                            var numberOfTimeToRunReaction = (need.Value + reaction.Target.Quantity - 1) / reaction.Target.Quantity;
-                            var extras = numberOfTimeToRunReaction * reaction.Target.Quantity - need.Value;
 
-                            foreach (var chem in reaction.Checmicals)
-                            {
-                                if (nextChecmicalsNeeded.ContainsKey(chem.Name))
-                                    nextChecmicalsNeeded[chem.Name] += chem.Quantity * numberOfTimeToRunReaction;
-                                else
-                                    nextChecmicalsNeeded.Add(chem.Name, chem.Quantity * numberOfTimeToRunReaction);
-                            }
-
-                            if (extras > 0)
-                                extraChemicals.Add(need.Key, extras);
-
-                        }
-                    }
-                    chemicalsNeeded = nextChecmicalsNeeded;
-                    ResolveChemsFromExtras(chemicalsNeeded, extraChemicals);
-                    canProduceMore = orePerFuelRatio <= extraChemicals["ORE"];
-                }
-                fuelProduced++;
+                //Oh crap, reset!
+                extraChemicals = chemCopy;
+                oreLeft = oreLeftCopy;
+                fuels -= productionRate;
+                productionRate /= 10;
             }
-            if (CanCreate(reactions["FUEL"].Target, extraChemicals))
-                fuelProduced++;
 
-            Console.WriteLine(fuelProduced); //4076489 too low
+            Console.WriteLine(fuels);
         }
 
-        private bool CanCreate(Chemical chem, Dictionary<string, long> extras)
+        private long Create(string name, long needed, Dictionary<string, long> extras)
         {
-            if (extras.GetValueOrDefault(chem.Name, 0) >= chem.Quantity)
+            if (name.Equals("ORE"))
             {
-                extras[chem.Name] -= chem.Quantity;
-                return true;
+                return needed;
             }
-            else if (chem.Name.Equals("ORE"))
-            {
-                return false;
-            }
-            else
-            {
-                return reactions[chem.Name].Checmicals.TrueForAll(c => CanCreate(c, extras));
-            }
-        }
 
-        private void ResolveChemsFromExtras(Dictionary<string, long> chemicalsNeeded, Dictionary<string, long> extraChemicals)
-        {
-            var somethingProduced = true;
-            while (somethingProduced)
+            if (extras.ContainsKey(name))
             {
-                somethingProduced = false;
-                foreach (var need in chemicalsNeeded.ToDictionary(kvp => kvp.Key, kvp => kvp.Value))   //Check what we have
+                if (extras[name] >= needed)
                 {
-                    if (extraChemicals.ContainsKey(need.Key))
-                    {
-                        somethingProduced = true;
-                        if (extraChemicals[need.Key] > chemicalsNeeded[need.Key])
-                        {
-                            extraChemicals[need.Key] -= chemicalsNeeded[need.Key];
-                            chemicalsNeeded.Remove(need.Key);
-                        }
-                        else if (extraChemicals[need.Key] < chemicalsNeeded[need.Key])
-                        {
-                            chemicalsNeeded[need.Key] -= extraChemicals[need.Key];
-                            extraChemicals.Remove(need.Key);
-                        }
-                        else
-                        {
-                            chemicalsNeeded.Remove(need.Key);
-                            extraChemicals.Remove(need.Key);
-                        }
-                    }
+                    extras[name] -= needed;
+                    return 0;
+                }
+                else
+                {
+                    needed -= extras[name];
+                    extras[name] = 0;
                 }
             }
+            var count = 0L;
+            var reaction = reactions[name];
+            var numberOfTimeToRunReaction = (needed + reaction.Target.Quantity - 1) / reaction.Target.Quantity;
+
+            foreach (var chem in reaction.Checmicals)
+            {
+                count += Create(chem.Name, chem.Quantity * numberOfTimeToRunReaction, extras);
+            }
+            var created = reaction.Target.Quantity * numberOfTimeToRunReaction;
+            if (created > needed)
+            {
+                if (extras.ContainsKey(name))
+                    extras[name] += created - needed;
+                else
+                    extras.Add(name, created - needed);
+            }
+            return count;
         }
 
         private class Chemical

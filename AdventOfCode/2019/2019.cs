@@ -54,7 +54,7 @@ namespace AdventOfCode2019
             //Day13.Game.Run();
 
             //Run<Day14.Part1>();
-            //Run<Day14.Part2>();
+            Run<Day14.Part2>();
 
             Run<Day15.Part1>();
             Run<Day15.Part2>();
