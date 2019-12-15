@@ -53,11 +53,14 @@ namespace AdventOfCode2019
             //Day13.Part2.Run();
             //Day13.Game.Run();
 
-            //Run<Day14.Part1>();
-            Run<Day14.Part2>();
+            //new Day14.Part1().Run();
+            //new Day14.Part2().Run();
 
-            Run<Day15.Part1>();
-            Run<Day15.Part2>();
+            //new Day15.Part1().Run();
+            //new Day15.Part2().Run();
+
+            new Day16.Part1().Run();
+            new Day16.Part2().Run();
 
             Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
             Console.WriteLine();
@@ -66,13 +69,6 @@ namespace AdventOfCode2019
 
             Console.WriteLine($"2019 complete!");
             Console.ReadLine();
-        }
-
-        private static void Run<T>() where T : new()
-        {
-            var method = typeof(T).GetMethod("Run");
-            var obj = new T();
-            method.Invoke(obj, new object[] { });
         }
     }
 }
