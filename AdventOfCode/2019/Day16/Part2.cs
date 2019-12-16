@@ -24,6 +24,11 @@ namespace AdventOfCode2019.Day16
 
             var nextSignal = new List<int>();
 
+            //for (int i = 1; i < 4; i++)
+            //{
+            //    var first = signal.Select((s, j) => GetMultiplier(i, j + 1) * s);
+            //}
+
             for (int x = 0; x < 100; x++)
             {
                 Console.WriteLine(x);
@@ -33,9 +38,9 @@ namespace AdventOfCode2019.Day16
                     var row = 0;
                     for (int j = i - 1; j < signal.Count; j++)
                     {
-                        var mutiliper = GetMultiplier(i, j + 1);
+                        var multiplier = GetMultiplier(i + messageOffset, j + messageOffset + 1);
                         //Console.Write($"{signal[j]}*{mutiliper} + ");
-                        var value = mutiliper * signal[j];
+                        var value = multiplier * signal[j];
                         row += value;
                     }
                     nextSignal.Add(Math.Abs(row) % 10);
@@ -46,7 +51,7 @@ namespace AdventOfCode2019.Day16
             }
 
             Console.WriteLine(string.Join("", nextSignal.Take(8)));
-            Console.WriteLine(string.Join("", nextSignal));
+            //Console.WriteLine(string.Join("", nextSignal));
             //Console.WriteLine(string.Join("", nextSignal.Skip(messageOffset % nextSignal.Count)));
             //Console.WriteLine(string.Join("", nextSignal.Skip(messageOffset).Take(8)));
         }
