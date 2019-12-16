@@ -11,56 +11,27 @@ namespace AdventOfCode2019.Day16
 {
     public class Part2
     {
-        List<int> basePattern = new List<int>() { 0, 1, 0, -1 };
         public void Run()
         {
             var input = File.ReadAllLines("2019/Day16/Input.txt");
             var signal = input.Single().Select(c => (int)char.GetNumericValue(c)).ToList();
-
             var messageOffset = signal.Take(7).Select((t, i) => t * Convert.ToInt32(Math.Pow(10, 7 - i - 1))).Sum();
 
             signal = Enumerable.Repeat(signal, 10000).SelectMany(i => i).ToList();
             signal = signal.Skip(messageOffset).ToList();
 
-            var nextSignal = new List<int>();
-
-            //for (int i = 1; i < 4; i++)
-            //{
-            //    var first = signal.Select((s, j) => GetMultiplier(i, j + 1) * s);
-            //}
-
-            for (int x = 0; x < 100; x++)
+            for (int i = 0; i < 100; i++)
             {
-                Console.WriteLine(x);
-                nextSignal.Clear();
-                for (int i = 1; i <= signal.Count; i++)
-                {
-                    var row = 0;
-                    for (int j = i - 1; j < signal.Count; j++)
-                    {
-                        var multiplier = GetMultiplier(i + messageOffset, j + messageOffset + 1);
-                        //Console.Write($"{signal[j]}*{mutiliper} + ");
-                        var value = multiplier * signal[j];
-                        row += value;
-                    }
-                    nextSignal.Add(Math.Abs(row) % 10);
-                    //Console.WriteLine($" = {Math.Abs(row) % 10}");
-                }
-                signal = nextSignal.ToList();
-                //Console.WriteLine(string.Join("", nextSignal));
+                var output = new List<int>() { signal.Last() };
+
+                for (int a = signal.Count - 2; a >= 0; a--)
+                    output.Add((signal[a] + output.Last()) % 10);
+
+                output.Reverse();
+                signal = output.ToList();
             }
 
-            Console.WriteLine(string.Join("", nextSignal.Take(8)));
-            //Console.WriteLine(string.Join("", nextSignal));
-            //Console.WriteLine(string.Join("", nextSignal.Skip(messageOffset % nextSignal.Count)));
-            //Console.WriteLine(string.Join("", nextSignal.Skip(messageOffset).Take(8)));
-        }
-
-
-        private int GetMultiplier(int phase, int offset)
-        {
-            var index = offset / phase;
-            return basePattern[(index) % 4];
+            Console.WriteLine(string.Join("", signal.Take(8)));
         }
     }
 }
