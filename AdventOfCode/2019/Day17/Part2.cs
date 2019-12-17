@@ -83,9 +83,22 @@ namespace AdventOfCode2019.Day17
             Console.WriteLine();
             Console.WriteLine(string.Join(" ", path.Select(p => $"{p.Item1}{p.Item2}")));
 
-            var mainRoutine = new List<int> { 65, 44, 66, 44, 67, 44, 67 }; //ABCC
-            var a = new List<int> { 76, 12, 76, 8, 82, 12, 76, 10, 76, 8, 76, 12, 82, 12, 76, 12, 76, 8 }; //L12 L8 R12 L10 L8 L12 R12 L12 L8
+            var combinations = GenerateCombinations(path.ToList());
+            var comparer = new ListComparer<Tuple<char, int>>();
+            var temp = combinations.Distinct(comparer).ToList();
+            var results = combinations.Select(c => c.Distinct().ToList()).Where(c => c.Count == 3).ToList();
 
+        }
+
+        private List<List<T>> GenerateCombinations<T>(List<T> list, int maxSize = 7)
+        {
+            var result = new List<List<T>>();
+            for (int i = 0; i < maxSize; i++)
+            {
+                result.Add(list.Take(i).ToList());
+                result.AddRange(GenerateCombinations(list.Skip(i).ToList(), maxSize - 1));
+            }
+            return result;
         }
 
         private bool IsValid(List<Tuple<char, int>> first, List<Tuple<char, int>> second, List<Tuple<char, int>> third)
@@ -133,6 +146,27 @@ namespace AdventOfCode2019.Day17
             }
 
             throw new Exception("hmm");
+        }
+
+        private class ListComparer<T> : EqualityComparer<List<T>>
+        {
+            public override bool Equals(List<T> x, List<T> y)
+            {
+                return x.SequenceEqual(y);
+            }
+
+            public override int GetHashCode(List<T> obj)
+            {
+                unchecked
+                {
+                    int hash = 19;
+                    foreach (var o in obj)
+                    {
+                        hash = hash * 31 + o.GetHashCode();
+                    }
+                    return hash;
+                }
+            }
         }
 
 
