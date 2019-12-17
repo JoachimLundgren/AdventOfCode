@@ -24,7 +24,7 @@ namespace AdventOfCode2019.Day17
             while (!computer.Finished)
             {
                 var output = computer.RunCode();
-                Console.Write((char)output);
+                //Console.Write((char)output);
                 if (output == 35)
                 {
                     scaffolds.Add(new Coordinate(x, y));
@@ -53,7 +53,7 @@ namespace AdventOfCode2019.Day17
             while (scaffolds.Count > 1)
             {
                 var adjacent = GetAdjacentCoordinates(robot, scaffolds);
-                var next = adjacent.FirstOrDefault(a => a.X == robot.X + robotDirection.X && a.Y == robot.Y + robotDirection.Y);
+                var next = adjacent.FirstOrDefault(adj => adj.X == robot.X + robotDirection.X && adj.Y == robot.Y + robotDirection.Y);
                 if (next != null)
                 {
                     count++;
@@ -74,15 +74,13 @@ namespace AdventOfCode2019.Day17
                     count = 0;
                 }
 
-                Console.SetCursorPosition(robot.X, robot.Y + 2);
-                Console.Write(turn);
+                //Console.SetCursorPosition(robot.X, robot.Y + 2);
+                //Console.Write(turn);
             }
 
             if (count != 0)
                 path.Add(new Tuple<char, int>(turn, count));
 
-            Console.WriteLine();
-            Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine(string.Join(" ", path.Select(p => $"{p.Item1}{p.Item2}")));
 
@@ -90,38 +88,34 @@ namespace AdventOfCode2019.Day17
              *
              * from output; L12 L8 R12 L10 L8 L12 R12 L12 L8 R12 R12 L8 L10 L12 L8 R12 L12 L8 R12 R12 L8 L10 L10 L8 L12 R12 R12 L8 L10 L10 L8 L12 R12
              *
-                Main = abacaacbcb
+                Main = ABACAACBCB
 
-                a = L12,L8,R12
-                b = L10,L8,L12,R12
-                c = R12,L8,L10
+                A = L12,L8,R12
+                B = L10,L8,L12,R12
+                C = R12,L8,L10
              * 
              */
 
             var main = GetAscii("A,B,A,C,A,A,C,B,C,B");
-            var a2 = GetAscii("L,12,L,8,R,12");
+            var a = GetAscii("L,12,L,8,R,12");
             var b = GetAscii("L,10,L,8,L,12,R,12");
             var c = GetAscii("R,12,L,8,L,10");
 
-            var computerInputs = main.Concat(a2).Concat(b).Concat(c).ToList();
-            computerInputs.Add((int)'n'); //Feed?
+            var computerInputs = main.Concat(a).Concat(b).Concat(c).ToList();
+            computerInputs.Add((int)'n');
             computerInputs.Add(10);
 
             program[0] = 2;
             var newComputer = new Computer() { Program = program };
             newComputer.Inputs = computerInputs;
 
-            int fifif = 0;
+            int res = 0;
             while (!newComputer.Finished)
             {
-                Console.WriteLine(newComputer.RunCode()); //3616 too low
+                res = newComputer.RunCode();
             }
 
-            //var combinations = GenerateCombinations(path.ToList());
-            //var comparer = new ListComparer<Tuple<char, int>>();
-            //var temp = combinations.Distinct(comparer).ToList();
-            //var results = combinations.Select(c => c.Distinct().ToList()).Where(c => c.Count == 3).ToList();
-
+            Console.WriteLine(res);
         }
 
         private List<int> GetAscii(string str)
@@ -172,28 +166,6 @@ namespace AdventOfCode2019.Day17
 
             throw new Exception("hmm");
         }
-
-        private class ListComparer<T> : EqualityComparer<List<T>>
-        {
-            public override bool Equals(List<T> x, List<T> y)
-            {
-                return x.SequenceEqual(y);
-            }
-
-            public override int GetHashCode(List<T> obj)
-            {
-                unchecked
-                {
-                    int hash = 19;
-                    foreach (var o in obj)
-                    {
-                        hash = hash * 31 + o.GetHashCode();
-                    }
-                    return hash;
-                }
-            }
-        }
-
 
         private class Computer
         {
