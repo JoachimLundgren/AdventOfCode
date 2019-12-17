@@ -23,7 +23,7 @@ namespace AdventOfCode2019.Day17
             Coordinate robot = null;
             while (!computer.Finished)
             {
-                var output = computer.RunCode(0);
+                var output = computer.RunCode();
                 Console.Write((char)output);
                 if (output == 35)
                 {
@@ -46,7 +46,6 @@ namespace AdventOfCode2019.Day17
                 }
             }
 
-            program[0] = 2;
             Coordinate robotDirection = new Coordinate(0, -1);
             var turn = 'X';
             var count = 0;
@@ -78,32 +77,58 @@ namespace AdventOfCode2019.Day17
                 Console.SetCursorPosition(robot.X, robot.Y + 2);
                 Console.Write(turn);
             }
+
+            if (count != 0)
+                path.Add(new Tuple<char, int>(turn, count));
+
             Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine(string.Join(" ", path.Select(p => $"{p.Item1}{p.Item2}")));
 
-            var combinations = GenerateCombinations(path.ToList());
-            var comparer = new ListComparer<Tuple<char, int>>();
-            var temp = combinations.Distinct(comparer).ToList();
-            var results = combinations.Select(c => c.Distinct().ToList()).Where(c => c.Count == 3).ToList();
+            /*
+             *
+             * from output; L12 L8 R12 L10 L8 L12 R12 L12 L8 R12 R12 L8 L10 L12 L8 R12 L12 L8 R12 R12 L8 L10 L10 L8 L12 R12 R12 L8 L10 L10 L8 L12 R12
+             *
+                Main = abacaacbcb
 
-        }
+                a = L12,L8,R12
+                b = L10,L8,L12,R12
+                c = R12,L8,L10
+             * 
+             */
 
-        private List<List<T>> GenerateCombinations<T>(List<T> list, int maxSize = 7)
-        {
-            var result = new List<List<T>>();
-            for (int i = 0; i < maxSize; i++)
+            var main = GetAscii("A,B,A,C,A,A,C,B,C,B");
+            var a2 = GetAscii("L,12,L,8,R,12");
+            var b = GetAscii("L,10,L,8,L,12,R,12");
+            var c = GetAscii("R,12,L,8,L,10");
+
+            var computerInputs = main.Concat(a2).Concat(b).Concat(c).ToList();
+            computerInputs.Add((int)'n'); //Feed?
+            computerInputs.Add(10);
+
+            program[0] = 2;
+            var newComputer = new Computer() { Program = program };
+            newComputer.Inputs = computerInputs;
+
+            int fifif = 0;
+            while (!newComputer.Finished)
             {
-                result.Add(list.Take(i).ToList());
-                result.AddRange(GenerateCombinations(list.Skip(i).ToList(), maxSize - 1));
+                Console.WriteLine(newComputer.RunCode()); //3616 too low
             }
-            return result;
+
+            //var combinations = GenerateCombinations(path.ToList());
+            //var comparer = new ListComparer<Tuple<char, int>>();
+            //var temp = combinations.Distinct(comparer).ToList();
+            //var results = combinations.Select(c => c.Distinct().ToList()).Where(c => c.Count == 3).ToList();
+
         }
 
-        private bool IsValid(List<Tuple<char, int>> first, List<Tuple<char, int>> second, List<Tuple<char, int>> third)
+        private List<int> GetAscii(string str)
         {
-            return first.Count <= 10 && second.Count <= 10 && third.Count <= 10;
+            var list = str.ToCharArray().Select(c => (int)c).ToList();
+            list.Add(10);
+            return list;
         }
 
         private List<Coordinate> GetAdjacentCoordinates(Coordinate coordinate, List<Coordinate> scaffolds)
@@ -172,12 +197,15 @@ namespace AdventOfCode2019.Day17
 
         private class Computer
         {
+            private int inputPointer;
+            public List<int> Inputs { get; set; }
+            public int NextInput => Inputs[inputPointer++];
             public int Pointer { get; set; }
             public List<int> Program { get; set; }
             public bool Finished { get; set; }
             public int RelativeBase { get; set; }
 
-            public int RunCode(int input)
+            public int RunCode()
             {
                 var running = true;
                 var outputValue = 0;
@@ -201,7 +229,7 @@ namespace AdventOfCode2019.Day17
                     }
                     else if (op == 3)
                     {
-                        SetValue(c, Pointer + 1, input);
+                        SetValue(c, Pointer + 1, NextInput);
                         Pointer += 2;
                     }
                     else if (op == 4)
