@@ -14,7 +14,7 @@ namespace AdventOfCode2019.Day18
         {
             var input = File.ReadAllLines("2019/Day18/Input.txt");
             var map = input.Select(line => line.ToCharArray()).ToArray();
-            var doors = map.Sum(line => line.Count(c => char.IsUpper(c)));
+            var items = map.Sum(line => line.Count(c => char.IsUpper(c) || char.IsLower(c)));
 
             Coordinate currentCoordinate = null;
             for (int y = 0; y < input.Length; y++)
@@ -28,64 +28,80 @@ namespace AdventOfCode2019.Day18
                 }
             }
 
-
-            var length = WalkTheWay(currentCoordinate, null, Copy(map), doors, new List<char>(), new List<char>());
+            var doorsList = new List<char>();
+            var length = WalkTheWay(currentCoordinate, null, Copy(map), items, ref doorsList, new List<char>());
             Console.WriteLine(length);
         }
 
-        private int WalkTheWay(Coordinate current, Coordinate previous, char[][] map, int doors, List<char> doorsFound, List<char> keysFound)
+        private int WalkTheWay(Coordinate current, Coordinate previous, char[][] map, int items, ref List<char> doorsFound, List<char> keysFound)
         {
             var moves = 0;
 
-            while (doorsFound.Count < doors)
+            while (doorsFound.Count + keysFound.Count < items)
             {
                 var possibleMoves = GetPossibleMoves(current, map, keysFound);
-                possibleMoves.Remove(previous);
-                if (possibleMoves.Count == 0)
+                if (possibleMoves.Count == 1 && possibleMoves.Contains(previous))
+                    return 1000000; //wrong way!
+
+
+                var possibleNewMoves = possibleMoves.Except(new[] { previous }).ToList();
+                if (possibleNewMoves.Count == 1)
                 {
-                    return int.MaxValue; //wrong way!
-                }
-                else if (possibleMoves.Count == 1)
-                {
-                    var c = map[possibleMoves.Single().Y][possibleMoves.Single().X];
+                    var c = map[possibleNewMoves.Single().Y][possibleNewMoves.Single().X];
                     if (c != '.')
                     {
                         if (char.IsUpper(c))
                         {
                             doorsFound.Add(c);
-                            map[possibleMoves.Single().Y][possibleMoves.Single().X] = '.';
+                            map[possibleNewMoves.Single().Y][possibleNewMoves.Single().X] = '.';
                         }
                         else
                         {
                             keysFound.Add(c);
-                            map[possibleMoves.Single().Y][possibleMoves.Single().X] = '.';
+                            map[possibleNewMoves.Single().Y][possibleNewMoves.Single().X] = '.';
                         }
-                        moves = WalkTheWay(possibleMoves.Single(), null, Copy(map), doors - doorsFound.Count, new List<char>(), keysFound.ToList());
+
+                        var bestCost = 1000000;
+                        var bestDoors = new List<char>();
+                        foreach (var newMove in possibleMoves) //we could go back now!
+                        {
+                            var newDoors = new List<char>();
+                            var newCost = WalkTheWay(newMove, null, Copy(map), items - doorsFound.Count, ref newDoors, keysFound.ToList());
+                            if (newCost < bestCost)
+                            {
+                                bestCost += newCost;
+                                bestDoors = newDoors;
+                            }
+                        }
+
+                        moves += bestCost;
+                        doorsFound.AddRange(bestDoors);
                     }
-                    previous = current;
-                    current = possibleMoves.Single();
-                    moves++;
+                    else
+                    {
+                        previous = current;
+                        current = possibleNewMoves.Single();
+                        moves++;
+                    }
                 }
                 else
                 {
-                    var shortestPath = int.MaxValue;
+                    var shortestPath = 1000000;
                     foreach (var move in possibleMoves)
                     {
                         int path;
                         var c = map[move.Y][move.X];
                         if (c != '.')
                         {
-                            if (char.IsUpper(c))
-                                doorsFound.Add(c);
-                            else
-                                keysFound.Add(c);
-
-                            map[possibleMoves.Single().Y][possibleMoves.Single().X] = '.';
-                            path = WalkTheWay(move, null, Copy(map), doors - doorsFound.Count, new List<char>(), keysFound.ToList());
+                            var newDoors = new List<char>();
+                            path = WalkTheWay(move, null, Copy(map), items - doorsFound.Count, ref newDoors, keysFound.ToList());
+                            doorsFound.AddRange(newDoors);
                         }
                         else
                         {
-                            path = WalkTheWay(move, current, Copy(map), doors - doorsFound.Count, new List<char>(), keysFound.ToList());
+                            var newDoors = new List<char>();
+                            path = WalkTheWay(move, current, Copy(map), items - doorsFound.Count, ref newDoors, keysFound.ToList());
+                            doorsFound.AddRange(newDoors);
                         }
 
                         if (path < shortestPath)
