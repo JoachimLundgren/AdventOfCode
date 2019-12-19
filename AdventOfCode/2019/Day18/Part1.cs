@@ -14,7 +14,7 @@ namespace AdventOfCode2019.Day18
         {
             var input = File.ReadAllLines("2019/Day18/Input.txt");
             var map = input.Select(line => line.ToCharArray()).ToArray();
-            var items = map.Sum(line => line.Count(c => char.IsUpper(c) || char.IsLower(c)));
+            var keys = map.Sum(line => line.Count(c => char.IsLower(c)));
 
             Coordinate currentCoordinate = null;
             for (int y = 0; y < input.Length; y++)
@@ -28,86 +28,51 @@ namespace AdventOfCode2019.Day18
                 }
             }
 
-            var doorsList = new List<char>();
-            var length = WalkTheWay(currentCoordinate, null, Copy(map), items, ref doorsList, new List<char>());
+            var length = WalkTheWay(currentCoordinate, Copy(map), keys);
             Console.WriteLine(length);
         }
 
-        private int WalkTheWay(Coordinate current, Coordinate previous, char[][] map, int items, ref List<char> doorsFound, List<char> keysFound)
+        private int WalkTheWay(Coordinate current, char[][] map, int keys)
         {
             var moves = 0;
 
-            while (doorsFound.Count + keysFound.Count < items)
+            while (keys > 0)
             {
-                var possibleMoves = GetPossibleMoves(current, map, keysFound);
-                if (possibleMoves.Count == 1 && possibleMoves.Contains(previous))
-                    return 1000000; //wrong way!
+                var c = map[current.Y][current.X];
 
-
-                var possibleNewMoves = possibleMoves.Except(new[] { previous }).ToList();
-                if (possibleNewMoves.Count == 1)
+                if (char.IsLower(c))
                 {
-                    var c = map[possibleNewMoves.Single().Y][possibleNewMoves.Single().X];
-                    if (c != '.')
-                    {
-                        if (char.IsUpper(c))
-                        {
-                            doorsFound.Add(c);
-                            map[possibleNewMoves.Single().Y][possibleNewMoves.Single().X] = '.';
-                        }
-                        else
-                        {
-                            keysFound.Add(c);
-                            map[possibleNewMoves.Single().Y][possibleNewMoves.Single().X] = '.';
-                        }
-
-                        var bestCost = 1000000;
-                        var bestDoors = new List<char>();
-                        foreach (var newMove in possibleMoves) //we could go back now!
-                        {
-                            var newDoors = new List<char>();
-                            var newCost = WalkTheWay(newMove, null, Copy(map), items - doorsFound.Count, ref newDoors, keysFound.ToList());
-                            if (newCost < bestCost)
-                            {
-                                bestCost += newCost;
-                                bestDoors = newDoors;
-                            }
-                        }
-
-                        moves += bestCost;
-                        doorsFound.AddRange(bestDoors);
-                    }
-                    else
-                    {
-                        previous = current;
-                        current = possibleNewMoves.Single();
-                        moves++;
-                    }
+                    Unlock(c, map);
+                    keys--;
+                    if (keys == 0)
+                        return moves;
                 }
                 else
                 {
-                    var shortestPath = 1000000;
+                    map[current.Y][current.X] = ','; //Don't go back!
+                }
+
+                moves++;
+                var possibleMoves = GetPossibleMoves(current, map);
+                if (!possibleMoves.Any())
+                    return 1000000; //wrong way!
+
+                if (possibleMoves.Count == 1)
+                {
+                    current = possibleMoves.Single();
+                }
+                else
+                {
+                    var bestCost = 1000000;
                     foreach (var move in possibleMoves)
                     {
-                        int path;
-                        var c = map[move.Y][move.X];
-                        if (c != '.')
-                        {
-                            var newDoors = new List<char>();
-                            path = WalkTheWay(move, null, Copy(map), items - doorsFound.Count, ref newDoors, keysFound.ToList());
-                            doorsFound.AddRange(newDoors);
-                        }
-                        else
-                        {
-                            var newDoors = new List<char>();
-                            path = WalkTheWay(move, current, Copy(map), items - doorsFound.Count, ref newDoors, keysFound.ToList());
-                            doorsFound.AddRange(newDoors);
-                        }
+                        var newCost = WalkTheWay(move, Copy(map), keys);
 
-                        if (path < shortestPath)
-                            shortestPath = path;
+                        if (newCost < bestCost)
+                            bestCost = newCost;
                     }
-                    return moves + shortestPath;
+
+                    return moves + bestCost;
                 }
             }
 
@@ -117,28 +82,50 @@ namespace AdventOfCode2019.Day18
         private char[][] Copy(char[][] map)
         {
             return map.Select(m => m.ToArray()).ToArray();
+            //foreach (var row in map)
+            //{
+            //    for (int i = 0; i < row.Length; i++)
+            //    {
+            //        if (row[i] == ',')
+            //            row[i] = '.';
+            //    }
+            //}
+            //return copy;
+        }
+
+        private void Unlock(char key, char[][] map)
+        {
+            var door = char.ToUpper(key);
+            foreach (var row in map)
+            {
+                for (int i = 0; i < row.Length; i++)
+                {
+                    if (row[i] == key || row[i] == door || row[i] == ',')
+                        row[i] = '.';
+                }
+            }
         }
 
 
-        private List<Coordinate> GetPossibleMoves(Coordinate current, char[][] map, List<char> keys)
+        private List<Coordinate> GetPossibleMoves(Coordinate current, char[][] map)
         {
             var moves = new List<Coordinate>();
 
-            if (current.Y > 0 && CanMove(map[current.Y - 1][current.X], keys))
+            if (current.Y > 0 && CanMove(map[current.Y - 1][current.X]))
                 moves.Add(new Coordinate(current.X, current.Y - 1));
-            if (current.Y < map.Length && CanMove(map[current.Y + 1][current.X], keys))
+            if (current.Y < map.Length && CanMove(map[current.Y + 1][current.X]))
                 moves.Add(new Coordinate(current.X, current.Y + 1));
-            if (current.X > 0 && CanMove(map[current.Y][current.X - 1], keys))
+            if (current.X > 0 && CanMove(map[current.Y][current.X - 1]))
                 moves.Add(new Coordinate(current.X - 1, current.Y));
-            if (current.X < map.First().Length && CanMove(map[current.Y][current.X + 1], keys))
+            if (current.X < map.First().Length && CanMove(map[current.Y][current.X + 1]))
                 moves.Add(new Coordinate(current.X + 1, current.Y));
 
             return moves;
         }
 
-        private bool CanMove(char c, List<char> keys)
+        private bool CanMove(char c/*, List<char> keys*/)
         {
-            return c == '.' || char.IsLower(c) || keys.Contains(char.ToLower(c));
+            return c == '.'|| char.IsLower(c)/*  || keys.Contains(char.ToLower(c))*/;
         }
     }
 }
