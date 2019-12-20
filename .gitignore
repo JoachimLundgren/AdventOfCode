@@ -1,3 +1,4 @@
 .vs/
 AdventOfCode/bin/
 AdventOfCode/obj/
+/AdventOfCode/bin2/netcoreapp2.1
