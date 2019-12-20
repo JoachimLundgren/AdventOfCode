@@ -49,20 +49,6 @@ namespace AdventOfCode2019.Day19
             Console.WriteLine("FOUND!!! " + (x * 10000 + y));   //102350956 wrong
         }
 
-        private bool CanFitShip(Coordinate corner, Computer computer)
-        {
-            for (int i = 0; i < 100; i++)
-            {
-                if (Run(computer, corner.X, corner.Y + i) != 1)
-                    return false;
-
-                if (Run(computer, corner.X + i, corner.Y) != 1)
-                    return false;
-            }
-
-            return true;
-        }
-
         private bool BeamWideEnough(Coordinate corner, Computer computer)
         {
             for (int i = 0; i < 100; i++)

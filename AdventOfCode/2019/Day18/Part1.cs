@@ -11,213 +11,82 @@ namespace AdventOfCode2019.Day18
 {
     public class Part1
     {
-        private object syncRoot = new object();
-        public int Depth { get; set; }
         public void Run()
         {
             var input = File.ReadAllLines("2019/Day18/Input.txt");
             var map = input.Select(line => line.ToCharArray()).ToArray();
 
             Hello(Copy(map));
-
-            //var keys = map.Sum(line => line.Count(c => char.IsLower(c)));
-
-
-            //Coordinate currentCoordinate = null;
-            //for (int y = 0; y < input.Length; y++)
-            //{
-            //    var x = input[y].IndexOf('@');
-            //    if (x != -1)
-            //    {
-            //        currentCoordinate = new Coordinate(x, y);
-            //        map[y][x] = '.';
-            //        break;
-            //    }
-            //}
-
-            //var length = DoIt(currentCoordinate, Copy(map));
-            //var length = WalkTheWay(currentCoordinate, Copy(map), keys);
-            //Console.WriteLine(length);
-        }
-
-        private int WalkTheWay(Coordinate current, char[][] map, int keys)
-        {
-            var moves = 0;
-
-            while (keys > 0)
-            {
-                var c = map[current.Y][current.X];
-
-                if (char.IsLower(c))
-                {
-                    Unlock(c, map);
-                    keys--;
-                    if (keys == 0)
-                        return moves;
-                }
-                else
-                {
-                    map[current.Y][current.X] = ','; //Don't go back!
-                }
-
-                moves++;
-                var possibleMoves = GetPossibleMoves(current, map);
-                if (!possibleMoves.Any())
-                    return 1000000; //wrong way!
-
-                if (possibleMoves.Count == 1)
-                {
-                    current = possibleMoves.Single();
-                }
-                else
-                {
-                    var bestCost = 1000000;
-                    foreach (var move in possibleMoves)
-                    {
-                        var newCost = WalkTheWay(move, Copy(map), keys);
-
-                        if (newCost < bestCost)
-                            bestCost = newCost;
-                    }
-
-                    return moves + bestCost;
-                }
-            }
-
-            return moves;
         }
 
         private void Hello(char[][] map)
         {
-            var keys = new List<Key>();
+            var paths = new Dictionary<char, List<Path>>();
+            paths.Add('@', FindAllPaths('@', Copy(map)));
             for (char i = 'a'; i <= 'z'; i++)
             {
-                var key = FindAllKeys(i, Copy(map));
-                if (key != null)
+                var path = FindAllPaths(i, Copy(map));
+                if (path.Any())
                 {
-                    keys.Add(key);
+                    paths.Add(i, path);
                     Console.Write(i);
                 }
             }
+
+            var p = CalculateShortestPath(paths);
             Console.WriteLine();
-            Console.WriteLine(CalcPath(FindAllKeys('@', Copy(map)), keys));
-
+            Console.WriteLine(string.Join(", ", p.Path));
+            Console.WriteLine(p.Length); //6362 wrong
         }
 
-        private int CalcPath(Key current, List<Key> keys)
+        private PathObj CalculateShortestPath(Dictionary<char, List<Path>> paths)
         {
-            if (!keys.Any())
-                return 0;
+            var keys = paths.Count;
+            var finalPaths = paths['@'].Where(p => !p.BlockedBy.Any()).Select(p => new PathObj(p.Cost, p.Start, p.End)).ToList();
 
-            var reachable = current.Paths.Where(p => !p.Value.BlockedBy.Any()).ToList();
-            var best = 1000000;
-            foreach (var path in reachable)
+            while (true)
             {
-                var next = keys.Single(k => k.C == path.Key);
-                var newKeys = RemoveChar(path.Key, keys);
-                var a = CalcPath(next, newKeys) + path.Value.Length;
-                if (a < best)
-                    best = a;
-            }
+                var shortestPath = finalPaths.OrderBy(fp => fp.Length).First(); //TODO keep sorted???
+                if (keys == shortestPath.Path.Count)
+                    return shortestPath;
 
-            return best;
+
+                var nextMoves = GetPossiblePaths(shortestPath, paths[shortestPath.Path.Last()]);
+
+                finalPaths.Remove(shortestPath);
+                foreach (var move in nextMoves)
+                {
+                    var existingPath = finalPaths.FirstOrDefault(fp =>
+                        fp.Path.Last() == move.End && shortestPath.Path.All(c => fp.Path.Contains(c)));
+
+                    if (existingPath == null || existingPath.Length > shortestPath.Length + move.Cost)
+                    {
+                        var clone = shortestPath.Clone();
+                        clone.Path.Add(move.End);
+                        clone.Length += move.Cost;
+                        finalPaths.Add(clone);
+                    }
+                }
+            }
         }
 
-        private List<Key> RemoveChar(char c, List<Key> keys)
+        private List<Path> GetPossiblePaths(PathObj p, List<Path> paths)
         {
-            var newKeys = keys
-                .Where(k => k.C != c)
-                .Select(k => new Key(k.C, k.Location, k.Paths.Where(kvp => kvp.Key != c).ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Clone()))).ToList();
-
-            foreach (var k in newKeys)
-            {
-                foreach (var path in k.Paths.Values)
-                    path.BlockedBy.Remove(c);
-            }
-            return newKeys;
+            return paths.Where(path => path.BlockedBy.All(blocked => p.Path.Contains(blocked)) && !p.Path.Contains(path.End)).OrderBy(x => x.Cost).ToList();
         }
 
-        private Key FindAllKeys(char c, char[][] map)
+        private List<Path> FindAllPaths(char c, char[][] map)
         {
+            var result = new List<Path>();
             var coord = GetCoordinate(c, map);
-            if (coord == null)
-                return null;
 
-            var keys = new Dictionary<char, Path>();
-            FindKeys2(coord, map, 0, keys, new List<char>());
-            keys.Remove(c);
-            return new Key(c, coord, keys);
+            if (coord != null)
+                FindKeys(coord, c, map, 0, result, new List<char>());
+
+            return result.Where(r => r.Cost > 0).ToList();
         }
 
-        private class Key
-        {
-            public char C { get; }
-            public Coordinate Location { get; }
-            public Dictionary<char, Path> Paths { get; }
-
-            public Key(char c, Coordinate loc, Dictionary<char, Path> paths)
-            {
-                C = c;
-                Location = loc;
-                Paths = paths;
-
-                foreach (var p in Paths)
-                {
-                    p.Value.BlockedBy.Remove(c);
-                }
-            }
-        }
-
-        private class Path
-        {
-            public int Length { get; set; }
-            public List<char> BlockedBy { get; set; }
-
-            public Path Clone()
-            {
-                return new Path { Length = Length, BlockedBy = BlockedBy.ToList() };
-            }
-        }
-
-        private int DoIt(Coordinate current, char[][] map)
-        {
-            if (!map.Any(m => m.Any(c => char.IsLower(c))))
-                return 0; //No more keys
-
-            //Depth++;
-            //Console.SetCursorPosition(0, 4);
-            //Console.WriteLine(Depth);
-            var nextKeys = new Dictionary<char, int>();
-            FindKeys(current, Copy(map), 0, nextKeys);
-
-            var best = 100000;
-            Parallel.ForEach(nextKeys, key =>
-            {
-                var coordinate = GetCoordinate(key.Key, map);
-                var newMap = Copy(map);
-                Unlock(key.Key, newMap);
-                var res = DoIt(coordinate, newMap) + key.Value;
-                lock (syncRoot)
-                {
-                    if (res < best)
-                        best = res;
-                }
-            });
-            //foreach (var key in nextKeys)
-            //{
-            //    var coordinate = GetCoordinate(key.Key, map);
-            //    var newMap = Copy(map);
-            //    Unlock(key.Key, newMap);
-            //    var res = DoIt(coordinate, newMap) + key.Value;
-            //    if (res < best)
-            //        best = res;
-            //}
-
-            //Depth--;
-            return best;
-        }
-
-        private void FindKeys2(Coordinate current, char[][] map, int moves, Dictionary<char, Path> keys, List<char> doors)
+        private void FindKeys(Coordinate current, char start, char[][] map, int moves, List<Path> paths, List<char> doors)
         {
             while (true)
             {
@@ -226,18 +95,23 @@ namespace AdventOfCode2019.Day18
                 if (char.IsLower(c))
                 {
                     //Key found!
-                    if (keys.ContainsKey(c))
+                    var path = paths.FirstOrDefault(p => p.End == c);
+                    if (path != null)
                     {
-                        if (keys[c].Length > moves)
+                        if (path.Cost > moves)
                         {
-                            keys[c].Length = moves;
-                            keys[c].BlockedBy = doors.ToList();
+                            path.Cost = moves;
+                            path.BlockedBy = doors.ToList();
                         }
                         else
+                        {
                             return;
+                        }
                     }
                     else
-                        keys.Add(c, new Path { Length = moves, BlockedBy = doors.ToList() });
+                    {
+                        paths.Add(new Path { Start = start, End = c, Cost = moves, BlockedBy = doors.ToList() });
+                    }
                 }
                 else if (char.IsUpper(c))
                 {
@@ -263,51 +137,7 @@ namespace AdventOfCode2019.Day18
                 {
                     foreach (var move in possibleMoves)
                     {
-                        FindKeys2(move, Copy(map), moves, keys, doors.ToList());
-                    }
-                    return;
-                }
-            }
-        }
-
-        private void FindKeys(Coordinate current, char[][] map, int moves, Dictionary<char, int> keys)
-        {
-            while (true)
-            {
-                var c = map[current.Y][current.X];
-
-                if (char.IsLower(c))
-                {
-                    if (keys.ContainsKey(c))
-                    {
-                        if (keys[c] > moves)
-                            keys[c] = moves;
-                        else
-                            return;
-                    }
-                    else
-                        keys.Add(c, moves);
-                }
-                else
-                {
-                    map[current.Y][current.X] = ',';
-                }
-
-
-                var possibleMoves = GetPossibleMoves(current, map);
-                if (!possibleMoves.Any())
-                    return;
-
-                moves++;
-                if (possibleMoves.Count == 1)
-                {
-                    current = possibleMoves.Single();
-                }
-                else
-                {
-                    foreach (var move in possibleMoves)
-                    {
-                        FindKeys(move, Copy(map), moves, keys);
+                        FindKeys(move, start, Copy(map), moves, paths, doors.ToList());
                     }
                     return;
                 }
@@ -334,20 +164,6 @@ namespace AdventOfCode2019.Day18
             return map.Select(m => m.ToArray()).ToArray();
         }
 
-        private void Unlock(char key, char[][] map)
-        {
-            var door = char.ToUpper(key);
-            foreach (var row in map)
-            {
-                for (int i = 0; i < row.Length; i++)
-                {
-                    if (row[i] == key || row[i] == door || row[i] == ',')
-                        row[i] = '.';
-                }
-            }
-        }
-
-
         private List<Coordinate> GetPossibleMoves(Coordinate current, char[][] map)
         {
             var moves = new List<Coordinate>();
@@ -368,6 +184,50 @@ namespace AdventOfCode2019.Day18
         private bool CanMove(char c)
         {
             return c == '.' || char.IsLetter(c) || c == '@';
+        }
+
+        private class PathObj
+        {
+            public List<char> Path { get; set; }
+            public int Length { get; set; }
+
+            public PathObj(int cost, params char[] path)
+            {
+                Length = cost;
+                Path = path.ToList();
+            }
+
+            public PathObj Clone()
+            {
+                return new PathObj(Length, Path.ToArray());
+            }
+        }
+
+        private class Key
+        {
+            public char C { get; }
+            public Coordinate Location { get; }
+            public Dictionary<char, Path> Paths { get; }
+
+            public Key(char c, Coordinate loc, Dictionary<char, Path> paths)
+            {
+                C = c;
+                Location = loc;
+                Paths = paths;
+
+                foreach (var p in Paths)
+                {
+                    p.Value.BlockedBy.Remove(c);
+                }
+            }
+        }
+
+        private class Path
+        {
+            public char Start { get; set; }
+            public char End { get; set; }
+            public int Cost { get; set; }
+            public List<char> BlockedBy { get; set; }
         }
     }
 }
