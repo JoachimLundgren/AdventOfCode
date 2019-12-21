@@ -6,6 +6,7 @@ namespace AdventOfCode.Utils
 {
     public class Coordinate
     {
+        public string Name { get; set; }
         public int X { get; set; }
         public int Y { get; set; }
 
@@ -13,6 +14,12 @@ namespace AdventOfCode.Utils
         {
             X = x;
             Y = y;
+        }
+
+        public Coordinate(string name, int x, int y)
+            : this(x,y)
+        {
+            Name = name;
         }
 
         public override int GetHashCode()
@@ -31,6 +38,8 @@ namespace AdventOfCode.Utils
 
         public override string ToString()
         {
+            if (!string.IsNullOrEmpty(Name))
+                return Name;
             return $"{X},{Y}";
         }
     }
