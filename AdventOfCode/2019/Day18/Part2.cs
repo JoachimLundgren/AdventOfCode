@@ -33,7 +33,7 @@ namespace AdventOfCode2019.Day18
                 map[start.Y + 1][start.X] = '#';
                 map[start.Y + 1][start.X + 1] = '1';
                 map[start.Y + 1][start.X - 1] = '2';
-                map[start.Y - 1][start.X - 1] = '3';
+                map[start.Y - 1][start.X + 1] = '3';
                 map[start.Y - 1][start.X - 1] = '4';
             }
             else if (robots == 4)
@@ -70,74 +70,91 @@ namespace AdventOfCode2019.Day18
                 }
             }
 
+            Console.WriteLine();
             var keys = map.Sum(row => row.Count(c => char.IsLower(c)));
             var p = CalculateShortestPath(paths, keys);
             Console.WriteLine();
-            //Console.WriteLine(string.Join(", ", p.));
-            Console.WriteLine(p.Length);
+            Console.WriteLine(p.Length); //2188 to high
         }
 
         private RobotGroup CalculateShortestPath(Dictionary<char, List<Path>> paths, int keys)
         {
-            //var keys = paths.Count - 4;
-            //var robot1Paths = paths['1'].Where(p => !p.BlockedBy.Any()).Select(p => new RobotPath(p.Cost, p.Start, p.End)).ToList();
-            //var robot2Paths = paths['2'].Where(p => !p.BlockedBy.Any()).Select(p => new RobotPath(p.Cost, p.Start, p.End)).ToList();
-            //var robot3Paths = paths['3'].Where(p => !p.BlockedBy.Any()).Select(p => new RobotPath(p.Cost, p.Start, p.End)).ToList();
-            //var robot4Paths = paths['4'].Where(p => !p.BlockedBy.Any()).Select(p => new RobotPath(p.Cost, p.Start, p.End)).ToList();
+            var startGroup = new RobotGroup();
 
-            var startGroup = new RobotGroup() { Robots = new Dictionary<int, RobotPath>() };
+            startGroup.Robots.Add(1, '1');
+            startGroup.Robots.Add(2, '2');
+            startGroup.Robots.Add(3, '3');
+            startGroup.Robots.Add(4, '4');
 
-            startGroup.Robots.Add(1, new RobotPath(0, '1'));
-            startGroup.Robots.Add(2, new RobotPath(0, '2'));
-            startGroup.Robots.Add(3, new RobotPath(0, '3'));
-            startGroup.Robots.Add(4, new RobotPath(0, '4'));
             var allGroups = new List<RobotGroup>() { startGroup };
-
+            var mostKeys = 0;
+            var duplicates = 0;
             while (true)
             {
-                var shortestGroup = allGroups.OrderBy(fp => fp.Length).First(); //TODO keep sorted???
+                var shortestGroup = allGroups.MinBy(fp => fp.Length);
                 if (keys == shortestGroup.KeysFound)
                     return shortestGroup;
 
                 var nextMoves = GetPossiblePaths(shortestGroup, paths);
 
+                if (shortestGroup.KeysFound > mostKeys)
+                {
+                    mostKeys = shortestGroup.KeysFound;
+                    duplicates += RemoveDuplicates(allGroups); //Slow af, try doing it fewer times?
+                    Console.WriteLine($"Found {mostKeys} of {keys} - Groups {allGroups.Count} Duplicates {duplicates}");
+                }
                 allGroups.Remove(shortestGroup);
                 foreach (var move in nextMoves)
                 {
-                    /*var existingPath = allGroups.FirstOrDefault(fp =>
-                        fp.Path.Last() == move.End && shortestGroup.Path.All(c => fp.Path.Contains(c)));
-
-                    if (existingPath == null || existingPath.Length > shortestGroup.Length + move.Cost)
-                    {
-                        var clone = shortestGroup.Clone();
-                        clone.Path.Add(move.End);
-                        clone.Length += move.Cost;
-                        allGroups.Add(clone);
-                    }*/
-
                     var clone = shortestGroup.Clone();
-                    clone.Robots[move.Item1].Path.Add(move.Item2.End);
-                    clone.Robots[move.Item1].Length += move.Item2.Cost;
+                    clone.Keys.Add(move.Key);
+                    clone.Length += move.Cost;
+                    clone.Robots[move.Robot] = move.Key;
                     allGroups.Add(clone);
                 }
             }
         }
 
-        private List<Tuple<int, Path>> GetPossiblePaths(RobotGroup group, Dictionary<char, List<Path>> paths)
+        private int RemoveDuplicates(List<RobotGroup> allGroups)
         {
-            var result = new List<Tuple<int, Path>>();
+            var duplicates = 0;
+            foreach (var group in allGroups.ToList())
+            {
+                var existingGroup = allGroups.Any(g =>
+                    g != group &&
+                    g.Robots[1] == group.Robots[1] &&
+                    g.Robots[2] == group.Robots[2] &&
+                    g.Robots[3] == group.Robots[3] &&
+                    g.Robots[4] == group.Robots[4] &&
+                    g.Length <= group.Length &&
+                    group.Keys.Intersect(g.Keys).Count() == group.Keys.Count());
 
-            var collectedKeys = group.Robots.Values.SelectMany(r => r.Path).Distinct().ToList();
+                if (existingGroup)
+                {
+                    duplicates++;
+                    allGroups.Remove(group);
+                }
+            }
+
+            return duplicates;
+        }
+
+        private List<Collected> GetPossiblePaths(RobotGroup group, Dictionary<char, List<Path>> paths)
+        {
+            var result = new List<Collected>();
 
             foreach (var robot in group.Robots)
             {
-                var possiblePaths = paths.GetValueOrDefault(robot.Value.Path.Last()) ?? new List<Path>();
+                var possiblePaths = paths.GetValueOrDefault(robot.Value) ?? new List<Path>();
 
                 foreach (var path in possiblePaths)
                 {
-                    if (path.BlockedBy.All(c => collectedKeys.Contains(c)))
+                    if (!group.Keys.Contains(path.End))
                     {
-                        result.Add(new Tuple<int, Path>(robot.Key, path));
+                        if (path.BlockedBy.All(c => group.Keys.Contains(c)))
+                        {
+                            result.Add(new Collected(robot.Key, path.End, path.Cost));
+                        }
                     }
                 }
             }
@@ -145,11 +162,7 @@ namespace AdventOfCode2019.Day18
             return result;
         }
 
-        private List<Path> GetPossiblePaths(RobotPath p, List<Path> paths)
-        {
-            return paths.Where(path => path.BlockedBy.All(blocked => p.Path.Contains(blocked)) && !p.Path.Contains(path.End)).OrderBy(x => x.Cost).ToList();
-        }
-
+        #region Pathfinder
         private List<Path> FindAllPaths(char c, char[][] map)
         {
             var result = new List<Path>();
@@ -261,15 +274,35 @@ namespace AdventOfCode2019.Day18
             return c == '.' || char.IsLetter(c) || char.IsDigit(c);
         }
 
+        #endregion
+
         private class RobotGroup
         {
-            public Dictionary<int, RobotPath> Robots { get; set; }
-            public int Length => Robots.Values.Sum(r => r.Length);
-            public int KeysFound => Robots.Values.Sum(r => r.Path.Count) - 4;
+            public Dictionary<int, char> Robots { get; set; }
+            public List<char> Keys { get; set; }
+            public int Length { get; set; }
+            public int KeysFound => Keys.Count;
+
+            public RobotGroup()
+            {
+                Robots = new Dictionary<int, char>();
+                Keys = new List<char>();
+            }
 
             public RobotGroup Clone()
             {
-                return new RobotGroup { Robots = Robots.ToDictionary(r => r.Key, r => r.Value.Clone()) };
+                return new RobotGroup { Robots = Robots.ToDictionary(r => r.Key, r => r.Value), Keys = Keys.ToList(), Length = Length };
+            }
+        }
+
+        private class Robot
+        {
+            public int Id { get; set; }
+            public char Location { get; set; }
+
+            public Robot Clone()
+            {
+                return new Robot { Id = Id, Location = Location };
             }
         }
 
@@ -315,6 +348,30 @@ namespace AdventOfCode2019.Day18
             public char End { get; set; }
             public int Cost { get; set; }
             public List<char> BlockedBy { get; set; }
+        }
+
+        private class Collected
+        {
+            public int Robot { get; }
+            public char Key { get; }
+            public int Cost { get; }
+
+            public Collected(int robot, char key, int cost)
+            {
+                Robot = robot;
+                Key = key;
+                Cost = cost;
+            }
+
+            public Collected Clone()
+            {
+                return new Collected(Robot, Key, Cost);
+            }
+
+            public override string ToString()
+            {
+                return $"{Robot} + {Key} == {Cost}";
+            }
         }
     }
 }
