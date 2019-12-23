@@ -77,8 +77,11 @@ namespace AdventOfCode2019
             //new Day21.Part1().Run();
             //new Day21.Part2().Run();
 
+            //new Day22.Part1().Run();
+            //new Day22.Part2().Run();
+
             //new Day23.Part1().Run();
-            new Day23.Part2().Run();
+            //new Day23.Part2().Run();
 
             Console.WriteLine($"{stopwatch.Elapsed.TotalMilliseconds}ms");
             Console.WriteLine();
