@@ -16,14 +16,13 @@ namespace AdventOfCode2019.Day22
         {
             var input = File.ReadAllLines("2019/Day22/Input.txt");
 
-            var position = 2020L;
-            var size = 119315717514047;
-            var shuffleTimes = 101741582076661;
+            var position = 5755; //2020L;
+            var size = 10007; // 119315717514047;
+            var shuffleTimes = 2; // 101741582076661;
 
             var newPos = Shuffle(input, position, size);
+            var newPos2 = Shuffle(input, newPos, size);
             var deltapos = newPos - position;
-
-            var temp = long.MaxValue;
 
             
             //var biggerPosition = bigPosition + deltapos * shuffleTimes;
