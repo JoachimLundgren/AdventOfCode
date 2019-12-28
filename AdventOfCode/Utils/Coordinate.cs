@@ -22,6 +22,11 @@ namespace AdventOfCode.Utils
             Name = name;
         }
 
+        public Coordinate Clone()
+        {
+            return new Coordinate(Name, X, Y);
+        }
+
         public override int GetHashCode()
         {
             return X.GetHashCode() ^ Y.GetHashCode();
